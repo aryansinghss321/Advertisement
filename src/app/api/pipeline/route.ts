@@ -198,9 +198,9 @@ Platform: ${platform || 'Website Hero Section'}
 
         // Parse 3 prompts
         const parsePrompts = (raw: string): [string, string, string] => {
-          const p1 = raw.match(/PROMPT_1:\s*(.+?)(?=PROMPT_2:|$)/s)?.[1]?.trim() ?? raw;
-          const p2 = raw.match(/PROMPT_2:\s*(.+?)(?=PROMPT_3:|$)/s)?.[1]?.trim() ?? raw;
-          const p3 = raw.match(/PROMPT_3:\s*(.+?)$/s)?.[1]?.trim() ?? raw;
+          const p1 = raw.match(/PROMPT_1:\s*([\s\S]+?)(?=PROMPT_2:|$)/)?.[1]?.trim() ?? raw;
+          const p2 = raw.match(/PROMPT_2:\s*([\s\S]+?)(?=PROMPT_3:|$)/)?.[1]?.trim() ?? raw;
+          const p3 = raw.match(/PROMPT_3:\s*([\s\S]+?)$/)?.[1]?.trim() ?? raw;
           return [p1, p2, p3];
         };
         let [prompt1, prompt2, prompt3] = parsePrompts(promptsRaw);
