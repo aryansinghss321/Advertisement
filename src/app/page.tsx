@@ -2,6 +2,10 @@
 
 import React, { useMemo, useRef, useState } from 'react';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+
 type StageStatus = 'idle' | 'running' | 'done' | 'error';
 
 interface Stage {
@@ -17,6 +21,12 @@ interface ImageResult {
   prompt: string;
   imageData: string;
 }
+
+type TabId = 'product' | 'audience' | 'visual' | 'constraints';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
 
 const INITIAL_STAGES: Stage[] = [
   { id: 1, title: 'Competitor Research', status: 'idle', output: null },
@@ -70,38 +80,24 @@ const MOOD_OPTIONS = [
   'Luxury & Refined',
 ];
 
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'product', label: 'Product' },
+  { id: 'audience', label: 'Audience' },
+  { id: 'visual', label: 'Visual' },
+  { id: 'constraints', label: 'Constraints' },
+];
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Small UI primitives (redesigned)
+// UI Primitives
 // ─────────────────────────────────────────────────────────────────────────────
 
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ');
 }
 
-function Pill({
-  children,
-  tone = 'neutral',
-}: {
-  children: React.ReactNode;
-  tone?: 'neutral' | 'brand' | 'good' | 'warn' | 'bad';
-}) {
-  const map: Record<string, string> = {
-    neutral: 'bg-white/5 text-gray-300 border-white/10',
-    brand: 'bg-amber-500/15 text-amber-200 border-amber-500/25',
-    good: 'bg-emerald-500/15 text-emerald-200 border-emerald-500/25',
-    warn: 'bg-yellow-500/15 text-yellow-200 border-yellow-500/25',
-    bad: 'bg-red-500/15 text-red-200 border-red-500/25',
-  };
-  return (
-    <span className={cn('inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs', map[tone])}>
-      {children}
-    </span>
-  );
-}
-
 function IconSpark() {
   return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M12 2l1.2 5.1L18 8.5l-4.4 2.1L12 16l-1.6-5.4L6 8.5l4.8-1.4L12 2z"
         stroke="currentColor"
@@ -118,6 +114,27 @@ function IconSpark() {
   );
 }
 
+function Pill({
+  children,
+  tone = 'neutral',
+}: {
+  children: React.ReactNode;
+  tone?: 'neutral' | 'brand' | 'good' | 'warn' | 'bad';
+}) {
+  const map: Record<string, string> = {
+    neutral: 'bg-gray-100 text-gray-600 border-gray-200',
+    brand: 'bg-amber-100 text-amber-700 border-amber-200',
+    good: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    warn: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    bad: 'bg-red-100 text-red-700 border-red-200',
+  };
+  return (
+    <span className={cn('inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium', map[tone])}>
+      {children}
+    </span>
+  );
+}
+
 function StageStatusDot({ status }: { status: StageStatus }) {
   const cls =
     status === 'running'
@@ -126,14 +143,14 @@ function StageStatusDot({ status }: { status: StageStatus }) {
         ? 'bg-emerald-400'
         : status === 'error'
           ? 'bg-red-400'
-          : 'bg-gray-600';
-  return <span className={cn('h-2.5 w-2.5 rounded-full', cls)} />;
+          : 'bg-gray-300';
+  return <span className={cn('h-2 w-2 rounded-full', cls)} />;
 }
 
 function ProgressBar({ value }: { value: number }) {
   const pct = Math.max(0, Math.min(100, value));
   return (
-    <div className="h-2 w-full overflow-hidden rounded-full bg-white/5 border border-white/10">
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
       <div
         className="h-full rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 transition-all duration-500"
         style={{ width: `${pct}%` }}
@@ -152,14 +169,12 @@ function FieldLabel({
   required?: boolean;
 }) {
   return (
-    <div className="space-y-1">
-      <div className="flex items-center gap-2">
-        <label className="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">
-          {label}
-        </label>
-        {required && <span className="text-[11px] font-semibold text-amber-300">Required</span>}
+    <div className="space-y-0.5">
+      <div className="flex items-center gap-1.5">
+        <label className="text-xs font-semibold text-gray-700">{label}</label>
+        {required && <span className="text-[10px] font-semibold text-amber-600">Required</span>}
       </div>
-      {tip && <p className="text-xs text-gray-500 leading-relaxed">{tip}</p>}
+      {tip && <p className="text-[11px] text-gray-400">{tip}</p>}
     </div>
   );
 }
@@ -182,10 +197,10 @@ function TextInput({
       placeholder={placeholder}
       disabled={disabled}
       className={cn(
-        'w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2.5 text-sm text-white',
-        'placeholder:text-gray-600 outline-none',
-        'focus:ring-2 focus:ring-amber-400/35 focus:border-amber-400/30',
-        'disabled:opacity-40'
+        'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900',
+        'placeholder:text-gray-400 outline-none',
+        'focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400/50',
+        'disabled:bg-gray-50 disabled:text-gray-400'
       )}
     />
   );
@@ -212,10 +227,10 @@ function TextareaInput({
       disabled={disabled}
       rows={rows}
       className={cn(
-        'w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2.5 text-sm text-white',
-        'placeholder:text-gray-600 outline-none resize-none',
-        'focus:ring-2 focus:ring-amber-400/35 focus:border-amber-400/30',
-        'disabled:opacity-40 leading-relaxed'
+        'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900',
+        'placeholder:text-gray-400 outline-none resize-none',
+        'focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400/50',
+        'disabled:bg-gray-50 disabled:text-gray-400'
       )}
     />
   );
@@ -239,9 +254,9 @@ function SelectInput({
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         className={cn(
-          'w-full appearance-none rounded-xl border border-white/10 bg-black/20 px-3 py-2.5 pr-10 text-sm text-white',
-          'outline-none focus:ring-2 focus:ring-amber-400/35 focus:border-amber-400/30',
-          'disabled:opacity-40 cursor-pointer'
+          'w-full appearance-none rounded-lg border border-gray-200 bg-white px-3 py-2 pr-10 text-sm text-gray-900',
+          'outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400/50',
+          'disabled:bg-gray-50 disabled:text-gray-400 cursor-pointer'
         )}
       >
         {options.map((o) => (
@@ -250,7 +265,7 @@ function SelectInput({
           </option>
         ))}
       </select>
-      <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-500">
+      <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
           <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -284,11 +299,11 @@ function MoodPicker({
             onClick={() => toggle(mood)}
             disabled={disabled}
             className={cn(
-              'rounded-full border px-3 py-1.5 text-xs transition',
+              'rounded-full border px-3 py-1 text-xs transition',
               active
-                ? 'border-amber-400/35 bg-amber-400/15 text-amber-100'
-                : 'border-white/10 bg-white/5 text-gray-400 hover:text-gray-200 hover:bg-white/10',
-              disabled && 'opacity-40'
+                ? 'border-amber-400 bg-amber-50 text-amber-700'
+                : 'border-gray-200 bg-white text-gray-500 hover:text-gray-700 hover:border-gray-300',
+              disabled && 'opacity-50'
             )}
           >
             {mood}
@@ -299,39 +314,16 @@ function MoodPicker({
   );
 }
 
-function SectionHeader({ title, right }: { title: string; right?: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <div className="h-9 w-9 rounded-2xl bg-gradient-to-br from-amber-400/25 to-yellow-500/10 border border-amber-400/20 flex items-center justify-center text-amber-200">
-          <IconSpark />
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-white">{title}</p>
-          <p className="text-xs text-gray-500">Fill the brief → run pipeline → review outputs</p>
-        </div>
-      </div>
-      {right}
-    </div>
-  );
-}
-
 function Card({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div
-      className={cn(
-        'rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] backdrop-blur',
-        'shadow-[0_20px_80px_rgba(0,0,0,0.35)]',
-        className
-      )}
-    >
+    <div className={cn('rounded-xl border border-gray-200 bg-white shadow-sm', className)}>
       {children}
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Feature Image Callouts (kept, just slightly improved visuals)
+// Feature Image Overlay
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CottonWeightIcon = () => (
@@ -401,9 +393,9 @@ function FeatureImageOverlay({ imageData, features }: { imageData: string; featu
   ];
 
   return (
-    <div className="relative group aspect-square overflow-hidden rounded-2xl">
+    <div className="relative group aspect-square overflow-hidden rounded-xl">
       <img src={imageData} alt="Feature breakdown" className="h-full w-full object-cover" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-black/10 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/10 pointer-events-none" />
 
       {featureList.map((feat, idx) => {
         const key = Object.keys(iconMap).find((k) => feat.toLowerCase().includes(k)) || 'default';
@@ -414,12 +406,12 @@ function FeatureImageOverlay({ imageData, features }: { imageData: string; featu
           <div key={idx} className="absolute" style={pos as React.CSSProperties}>
             <div
               className={cn(
-                'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium shadow-lg',
-                'bg-black/70 border border-white/20 text-white backdrop-blur'
+                'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium shadow-md',
+                'bg-white/90 border border-gray-200 text-gray-800 backdrop-blur-sm'
               )}
               style={{ transform: 'translate(-50%, -50%)' }}
             >
-              <span className="w-4 h-4 text-yellow-300">{icon}</span>
+              <span className="w-4 h-4 text-amber-600">{icon}</span>
               <span className="truncate max-w-[120px]">{feat}</span>
             </div>
           </div>
@@ -430,7 +422,7 @@ function FeatureImageOverlay({ imageData, features }: { imageData: string; featu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Evaluation (kept functionally same)
+// Evaluation Section
 // ─────────────────────────────────────────────────────────────────────────────
 
 function EvalSection({ title, text, color }: { title: string; text: string; color: string }) {
@@ -440,32 +432,31 @@ function EvalSection({ title, text, color }: { title: string; text: string; colo
     const m = line.match(/^(.+?):\s*(\d+)\/10\s*[—–-]\s*(.+)$/);
     if (m) scores.push({ label: m[1], score: parseInt(m[2]), reason: m[3] });
   });
-  if (!scores.length) return <p className="text-gray-300 text-xs">{text}</p>;
+  if (!scores.length) return <p className="text-gray-600 text-xs">{text}</p>;
 
   const getScoreColor = (score: number) => {
-    if (score >= 8) return 'from-emerald-400 to-emerald-500';
-    if (score >= 6) return 'from-amber-400 to-amber-500';
-    return 'from-red-400 to-red-500';
+    if (score >= 8) return 'bg-emerald-500';
+    if (score >= 6) return 'bg-amber-500';
+    return 'bg-red-500';
   };
 
   return (
-    <div className="space-y-3">
-      <div className={cn('text-[11px] font-bold uppercase tracking-wider bg-gradient-to-r bg-clip-text text-transparent', color)}>
+    <div className="space-y-2">
+      <div className={cn('text-[11px] font-bold uppercase tracking-wide text-gray-700')}>
         {title}
       </div>
-
       {scores.map(({ label, score, reason }) => (
-        <div key={label} className="space-y-1.5">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-gray-300">{label}</span>
-            <span className={cn('text-[11px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r text-gray-900', getScoreColor(score))}>
+        <div key={label} className="space-y-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs text-gray-600">{label}</span>
+            <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full text-white', getScoreColor(score))}>
               {score}/10
             </span>
           </div>
-          <div className="h-2 w-full rounded-full bg-white/5 border border-white/10 overflow-hidden">
-            <div className={cn('h-full rounded-full bg-gradient-to-r transition-all duration-700', getScoreColor(score))} style={{ width: `${score * 10}%` }} />
+          <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
+            <div className={cn('h-full rounded-full transition-all duration-700', getScoreColor(score))} style={{ width: `${score * 10}%` }} />
           </div>
-          <p className="text-xs text-gray-500">{reason}</p>
+          <p className="text-[11px] text-gray-400">{reason}</p>
         </div>
       ))}
     </div>
@@ -479,26 +470,26 @@ function EvaluationCard({ text }: { text: string }) {
   const overall = text.match(/OVERALL:\s*(.+)/i)?.[1] ?? '';
 
   if (!heroBlock && !lifestyleBlock && !featureBlock) {
-    return <p className="text-gray-300 text-xs whitespace-pre-wrap">{text}</p>;
+    return <p className="text-gray-600 text-xs whitespace-pre-wrap">{text}</p>;
   }
 
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <EvalSection title="Hero / Premium" text={heroBlock} color="from-amber-300 to-yellow-300" />
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+          <EvalSection title="Hero / Premium" text={heroBlock} color="from-amber-600 to-amber-700" />
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <EvalSection title="Lifestyle" text={lifestyleBlock} color="from-cyan-300 to-blue-300" />
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+          <EvalSection title="Lifestyle" text={lifestyleBlock} color="from-cyan-600 to-blue-700" />
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <EvalSection title="Feature" text={featureBlock} color="from-purple-300 to-pink-300" />
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+          <EvalSection title="Feature" text={featureBlock} color="from-purple-600 to-pink-700" />
         </div>
       </div>
 
       {overall && (
-        <div className="pt-4 border-t border-white/10">
-          <p className="text-xs text-gray-400 italic leading-relaxed">{overall}</p>
+        <div className="pt-3 border-t border-gray-200">
+          <p className="text-xs text-gray-500 italic">{overall}</p>
         </div>
       )}
     </div>
@@ -506,10 +497,13 @@ function EvaluationCard({ text }: { text: string }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Main page (complete UI redesign; logic preserved)
+// Main App Component – Redesigned Layout
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function Home() {
+export default function App() {
+  // State
+  const [activeTab, setActiveTab] = useState<TabId>('product');
+
   // Product Identity
   const [productName, setProductName] = useState('Oversized Graphic T-Shirt');
   const [productCategory, setProductCategory] = useState('Apparel & Clothing');
@@ -633,59 +627,46 @@ export default function Home() {
     return { label: 'Idle', tone: 'neutral' as const };
   }, [isRunning, errorMessage, images.length]);
 
-  return (
-    <main className="min-h-screen bg-[#07080b] text-white">
-      {/* Background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 opacity-[0.12]" style={{
-          backgroundImage:
-            'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.12) 1px, transparent 0)',
-          backgroundSize: '24px 24px',
-        }} />
-        <div className="absolute -top-40 left-1/3 h-[520px] w-[520px] rounded-full bg-amber-500/10 blur-3xl" />
-        <div className="absolute -bottom-48 right-1/4 h-[520px] w-[520px] rounded-full bg-blue-500/10 blur-3xl" />
-      </div>
+  // Check if all required fields in each tab are filled
+  const tabReady = {
+    product: Boolean(productVisualAnchor.trim()),
+    audience: Boolean(targetAudience.trim() && pricePositioning.trim()),
+    visual: Boolean(brandColors.trim() && brandTone.trim() && visualMood.length > 0),
+    constraints: Boolean(platform.trim()),
+  };
 
+  return (
+    <main className="min-h-screen bg-gray-50 text-gray-900">
       {/* Sticky header */}
-      <div className="sticky top-0 z-40 border-b border-white/10 bg-black/40 backdrop-blur">
-        <div className="mx-auto max-w-7xl px-4 md:px-6 py-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="sticky top-0 z-40 border-b border-gray-200 bg-white shadow-sm">
+        <div className="mx-auto max-w-[1600px] px-4 md:px-6 py-3">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-500 text-gray-950 flex items-center justify-center shadow-[0_20px_60px_rgba(245,158,11,0.25)]">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-500 text-gray-900 flex items-center justify-center">
                 <IconSpark />
               </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-lg md:text-xl font-semibold tracking-tight">Intent Farm</h1>
-                  <Pill tone={pipelineState.tone}>{pipelineState.label}</Pill>
-                  <Pill tone="neutral">{platform}</Pill>
-                </div>
-                <p className="text-xs text-gray-500">
-                  7-stage creative pipeline · 3 strategic images · consistent product identity
-                </p>
+              <div className="flex items-center gap-2 flex-wrap min-w-0">
+                <h1 className="text-base md:text-lg font-semibold text-gray-900">Intent Farm</h1>
+                <Pill tone={pipelineState.tone}>{pipelineState.label}</Pill>
+                <Pill tone="neutral">{platform}</Pill>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="hidden md:block w-56">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] text-gray-500">Progress</span>
-                  <span className="text-[11px] text-gray-500">
-                    {completedCount}/{stages.length}
-                  </span>
-                </div>
+            <div className="flex items-center gap-3 flex-1 justify-end">
+              <div className="hidden sm:flex items-center gap-2 flex-1 max-w-xs">
+                <span className="text-[11px] text-gray-400">Progress</span>
                 <ProgressBar value={progressPct} />
+                <span className="text-[11px] text-gray-400 tabular-nums">{completedCount}/{stages.length}</span>
               </div>
 
               <button
                 onClick={handleRun}
                 disabled={!canRun}
                 className={cn(
-                  'rounded-xl px-4 py-2.5 text-sm font-semibold tracking-wide',
-                  'bg-gradient-to-r from-amber-400 to-yellow-500 text-gray-950',
-                  'shadow-[0_18px_60px_rgba(245,158,11,0.18)]',
-                  'hover:from-amber-300 hover:to-yellow-400 transition',
-                  (!canRun) && 'opacity-40 cursor-not-allowed'
+                  'rounded-xl px-5 py-2.5 text-sm font-semibold',
+                  'bg-gradient-to-r from-amber-400 to-yellow-500 text-gray-900',
+                  'hover:from-amber-300 hover:to-yellow-400 transition shadow-sm',
+                  (!canRun) && 'opacity-50 cursor-not-allowed'
                 )}
               >
                 {isRunning ? 'Running…' : 'Run Pipeline'}
@@ -694,192 +675,177 @@ export default function Home() {
               {isRunning && (
                 <button
                   onClick={stop}
-                  className={cn(
-                    'rounded-xl px-3 py-2.5 text-sm font-semibold',
-                    'border border-white/10 bg-white/5 text-gray-200 hover:bg-white/10 transition'
-                  )}
+                  className="rounded-xl px-4 py-2.5 text-sm font-medium border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition"
                 >
                   Stop
                 </button>
               )}
             </div>
+          </div>
 
-            <div className="md:hidden">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] text-gray-500">Progress</span>
-                <span className="text-[11px] text-gray-500">
-                  {completedCount}/{stages.length}
-                </span>
-              </div>
-              <ProgressBar value={progressPct} />
-            </div>
+          {/* Mobile progress bar */}
+          <div className="sm:hidden mt-3 flex items-center gap-2">
+            <span className="text-[11px] text-gray-400">Progress</span>
+            <ProgressBar value={progressPct} />
+            <span className="text-[11px] text-gray-400">{completedCount}/{stages.length}</span>
           </div>
         </div>
       </div>
 
       {/* Body */}
-      <div className="relative mx-auto max-w-7xl px-4 md:px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left: Brief */}
-          <div className="lg:col-span-4 space-y-6">
-            <Card className="p-5">
-              <SectionHeader
-                title="Brand Brief"
-                right={
-                  <Pill tone={productVisualAnchor.trim() ? 'good' : 'warn'}>
-                    Anchor {productVisualAnchor.trim() ? 'Ready' : 'Missing'}
-                  </Pill>
-                }
-              />
+      <div className="relative mx-auto max-w-[1600px] px-4 md:px-6 py-6">
 
-              <div className="mt-5 space-y-5">
-                {/* Product */}
-                <div className="space-y-3">
-                  <p className="text-[11px] uppercase tracking-widest text-gray-500">Product</p>
+        {/* Brand Brief - Tabbed Horizontal Strip */}
+        <Card className="mb-6">
+          {/* Tab Headers */}
+          <div className="border-b border-gray-100">
+            <div className="flex items-center gap-1 px-4 pt-3">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    'relative px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors',
+                    activeTab === tab.id
+                      ? 'text-amber-700 bg-amber-50'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  )}
+                >
+                  <span className="flex items-center gap-2">
+                    {tab.label}
+                    {tabReady[tab.id] && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    )}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
 
+          {/* Tab Content */}
+          <div className="p-4">
+            {/* Product Tab */}
+            {activeTab === 'product' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-1.5">
                     <FieldLabel label="Product Name" />
                     <TextInput value={productName} onChange={setProductName} disabled={isRunning} />
                   </div>
-
                   <div className="space-y-1.5">
-                    <FieldLabel label="Category" tip="Helps target the right competitors" />
+                    <FieldLabel label="Category" tip="Helps target competitors" />
                     <SelectInput value={productCategory} onChange={setProductCategory} options={PRODUCT_CATEGORIES} disabled={isRunning} />
                   </div>
-
                   <div className="space-y-1.5">
-                    <FieldLabel label="Key Features" tip="Fabric, fit, material, tech specs" />
+                    <FieldLabel label="Key Features" tip="Fabric, fit, material" />
                     <TextInput value={keyFeatures} onChange={setKeyFeatures} disabled={isRunning} />
                   </div>
-
                   <div className="space-y-1.5">
-                    <FieldLabel label="Core USP" tip="What makes this product different?" />
+                    <FieldLabel label="Core USP" tip="What makes it different?" />
                     <TextInput value={coreUSP} onChange={setCoreUSP} disabled={isRunning} />
                   </div>
+                </div>
 
-                  <div className="rounded-2xl border border-amber-400/20 bg-amber-400/5 p-3 space-y-2">
-                    <FieldLabel
-                      label="Product Visual Description"
-                      required
-                      tip="This is locked into every prompt — it’s the biggest driver of consistency across all 3 images."
-                    />
-                    <TextareaInput value={productVisualAnchor} onChange={setProductVisualAnchor} disabled={isRunning} rows={4} />
-                    <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-                      <p className="text-[11px] uppercase tracking-wider text-amber-200 font-semibold">Tip</p>
-                      <p className="text-xs text-gray-400 leading-relaxed mt-1">
-                        Be literal: color, print, fit, collar, sleeves, texture. The scene can change — the product shouldn’t.
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Example: <span className="italic text-gray-300">“Black oversized crew-neck tee with large distressed yellow chest graphic, dropped shoulders, ribbed collar”</span>
-                      </p>
+                {/* Product Visual Description - highlighted */}
+                <div className={cn(
+                  'rounded-xl border-2 p-4 space-y-3',
+                  productVisualAnchor.trim() ? 'border-amber-300 bg-amber-50/30' : 'border-yellow-300 bg-yellow-50/30'
+                )}>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <label className="text-xs font-bold text-gray-700">Product Visual Description</label>
+                        <span className="text-[10px] font-semibold text-amber-600">Required</span>
+                      </div>
+                      <p className="text-[11px] text-gray-400">Locked into every prompt — biggest driver of consistency.</p>
                     </div>
+                    <Pill tone={productVisualAnchor.trim() ? 'good' : 'warn'}>
+                      {productVisualAnchor.trim() ? 'Ready' : 'Missing'}
+                    </Pill>
+                  </div>
+                  <TextareaInput value={productVisualAnchor} onChange={setProductVisualAnchor} disabled={isRunning} rows={2} />
+                  <div className="rounded-lg border border-gray-200 bg-white p-3">
+                    <p className="text-[11px] font-semibold text-amber-700">Tip</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">Be literal: color, print, fit, collar, sleeves, texture. The scene can change — the product shouldn't.</p>
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      Example: <span className="italic text-gray-600">"Black oversized crew-neck tee with large distressed yellow chest graphic, dropped shoulders, ribbed collar"</span>
+                    </p>
                   </div>
                 </div>
+              </div>
+            )}
 
-                {/* Audience */}
-                <div className="space-y-3">
-                  <p className="text-[11px] uppercase tracking-widest text-gray-500">Audience & Positioning</p>
-
-                  <div className="space-y-1.5">
-                    <FieldLabel label="Target Audience" />
-                    <TextInput value={targetAudience} onChange={setTargetAudience} disabled={isRunning} />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <FieldLabel label="Price Positioning" tip="Biggest driver of visual style" />
-                    <SelectInput value={pricePositioning} onChange={setPricePositioning} options={PRICE_POSITIONS} disabled={isRunning} />
-                  </div>
+            {/* Audience Tab */}
+            {activeTab === 'audience' && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="space-y-1.5">
+                  <FieldLabel label="Target Audience" />
+                  <TextInput value={targetAudience} onChange={setTargetAudience} disabled={isRunning} />
                 </div>
+                <div className="space-y-1.5">
+                  <FieldLabel label="Price Positioning" tip="Biggest style driver" />
+                  <SelectInput value={pricePositioning} onChange={setPricePositioning} options={PRICE_POSITIONS} disabled={isRunning} />
+                </div>
+              </div>
+            )}
 
-                {/* Visual */}
-                <div className="space-y-3">
-                  <p className="text-[11px] uppercase tracking-widest text-gray-500">Visual Direction</p>
-
+            {/* Visual Tab */}
+            {activeTab === 'visual' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-1.5">
                     <FieldLabel label="Brand Colors" />
                     <TextInput value={brandColors} onChange={setBrandColors} disabled={isRunning} />
                   </div>
-
                   <div className="space-y-1.5">
                     <FieldLabel label="Brand Tone" />
                     <TextInput value={brandTone} onChange={setBrandTone} disabled={isRunning} />
                   </div>
-
-                  <div className="space-y-1.5">
-                    <FieldLabel label="Visual Mood" tip="Select all that apply" />
-                    <MoodPicker selected={visualMood} onChange={setVisualMood} disabled={isRunning} />
-                  </div>
                 </div>
+                <div className="space-y-1.5">
+                  <FieldLabel label="Visual Mood" tip="Select all that apply" />
+                  <MoodPicker selected={visualMood} onChange={setVisualMood} disabled={isRunning} />
+                </div>
+              </div>
+            )}
 
-                {/* Constraints */}
-                <div className="space-y-3">
-                  <p className="text-[11px] uppercase tracking-widest text-gray-500">Constraints</p>
-
+            {/* Constraints Tab */}
+            {activeTab === 'constraints' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-1.5">
                     <FieldLabel label="Known Competitors" tip="Real brand names = better research" />
                     <TextInput value={competitorBrands} onChange={setCompetitorBrands} disabled={isRunning} />
                   </div>
-
                   <div className="space-y-1.5">
-                    <FieldLabel label="What to AVOID" tip="Colors, styles, compositions to never use" />
+                    <FieldLabel label="What to AVOID" tip="Colors, styles to never use" />
                     <TextInput value={avoidElements} onChange={setAvoidElements} disabled={isRunning} />
                   </div>
-
                   <div className="space-y-1.5">
                     <FieldLabel label="Platform" tip="Changes crop + composition rules" />
                     <SelectInput value={platform} onChange={setPlatform} options={PLATFORMS} disabled={isRunning} />
                   </div>
                 </div>
-
-                {!productVisualAnchor.trim() && (
-                  <div className="rounded-2xl border border-amber-400/20 bg-amber-400/5 p-3">
-                    <p className="text-xs text-amber-200 font-semibold">Fill the Product Visual Description to enable the pipeline.</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Everything else can be imperfect — this field should be precise.
-                    </p>
-                  </div>
-                )}
               </div>
-            </Card>
-
-            {errorMessage && (
-              <Card className="p-4 border-red-500/25">
-                <div className="flex items-start gap-3">
-                  <div className="h-9 w-9 rounded-2xl bg-red-500/15 border border-red-500/25 flex items-center justify-center text-red-200">
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 9v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                      <path d="M12 17h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                      <path
-                        d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-red-200">Pipeline error</p>
-                    <p className="text-xs text-gray-400 mt-1">{errorMessage}</p>
-                  </div>
-                </div>
-              </Card>
             )}
           </div>
+        </Card>
 
-          {/* Middle: Pipeline timeline */}
-          <div className="lg:col-span-4 space-y-6">
+        {/* Three-Column Results Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* Column 1: Pipeline Timeline */}
+          <div className="space-y-4">
             <Card className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold">Pipeline Timeline</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Click completed stages to expand output (evaluation has a structured view).
-                  </p>
+                  <p className="text-sm font-semibold text-gray-900">Pipeline Timeline</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Click completed stages to expand output.</p>
                 </div>
                 <Pill tone="neutral">{completedCount}/{stages.length} done</Pill>
               </div>
 
-              <div className="mt-5 space-y-2">
+              <div className="mt-4 space-y-2">
                 {stages.map((stage) => {
                   const expanded = expandedStage === stage.id && stage.status === 'done';
                   const isEval = stage.id === 7;
@@ -888,45 +854,43 @@ export default function Home() {
                     <div
                       key={stage.id}
                       className={cn(
-                        'rounded-2xl border p-3 transition',
-                        stage.status === 'running' && 'border-amber-500/25 bg-amber-400/5',
-                        stage.status === 'done' && 'border-white/10 bg-white/5 hover:bg-white/10 cursor-pointer',
-                        stage.status === 'idle' && 'border-white/10 bg-white/[0.03]',
-                        stage.status === 'error' && 'border-red-500/25 bg-red-500/5'
+                        'rounded-xl border p-3 transition cursor-pointer',
+                        stage.status === 'running' && 'border-amber-300 bg-amber-50',
+                        stage.status === 'done' && 'border-gray-200 bg-gray-50 hover:bg-gray-100',
+                        stage.status === 'idle' && 'border-gray-100 bg-white',
+                        stage.status === 'error' && 'border-red-200 bg-red-50'
                       )}
                       onClick={() => {
                         if (stage.status !== 'done') return;
                         setExpandedStage(expanded ? null : stage.id);
                       }}
-                      role={stage.status === 'done' ? 'button' : undefined}
-                      tabIndex={stage.status === 'done' ? 0 : -1}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 w-[64px]">
+                        <div className="flex items-center gap-2 w-[56px]">
                           <StageStatusDot status={stage.status} />
-                          <span className="text-xs text-gray-500 tabular-nums">{String(stage.id).padStart(2, '0')}</span>
+                          <span className="text-xs text-gray-400 tabular-nums font-mono">{String(stage.id).padStart(2, '0')}</span>
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <p className={cn('text-sm font-medium truncate', stage.status === 'idle' ? 'text-gray-500' : 'text-gray-100')}>
+                          <p className={cn('text-sm font-medium', stage.status === 'idle' ? 'text-gray-400' : 'text-gray-700')}>
                             {stage.title}
                           </p>
-                          {stage.status === 'running' && <p className="text-xs text-amber-200 mt-0.5">Processing…</p>}
-                          {stage.status === 'error' && <p className="text-xs text-red-200 mt-0.5">Failed</p>}
-                          {stage.status === 'done' && <p className="text-xs text-gray-500 mt-0.5">Click to view output</p>}
+                          {stage.status === 'running' && <p className="text-xs text-amber-600 mt-0.5">Processing…</p>}
+                          {stage.status === 'error' && <p className="text-xs text-red-600 mt-0.5">Failed</p>}
+                          {stage.status === 'done' && <p className="text-xs text-gray-400 mt-0.5">Click to view output</p>}
                         </div>
 
                         {stage.status === 'done' && (
-                          <span className="text-gray-500 text-xs">{expanded ? 'Hide' : 'View'}</span>
+                          <span className="text-gray-400 text-xs">{expanded ? 'Hide' : 'View'}</span>
                         )}
                       </div>
 
                       {expanded && stage.output && (
-                        <div className="mt-3 pt-3 border-t border-white/10">
+                        <div className="mt-3 pt-3 border-t border-gray-200">
                           {isEval ? (
                             <EvaluationCard text={stage.output} />
                           ) : (
-                            <p className="text-xs text-gray-300 whitespace-pre-wrap leading-relaxed">{stage.output}</p>
+                            <p className="text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">{stage.output}</p>
                           )}
                         </div>
                       )}
@@ -936,12 +900,13 @@ export default function Home() {
               </div>
             </Card>
 
+            {/* Inline Evaluation Scorecard */}
             {stage7 && (
               <Card className="p-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-semibold">Evaluation Scorecard</p>
-                    <p className="text-xs text-gray-500 mt-0.5">The final QA view of all 3 images.</p>
+                    <p className="text-sm font-semibold text-gray-900">Evaluation Scorecard</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Final QA view of all 3 images.</p>
                   </div>
                   <Pill tone="good">Done</Pill>
                 </div>
@@ -952,21 +917,21 @@ export default function Home() {
             )}
           </div>
 
-          {/* Right: Outputs */}
-          <div className="lg:col-span-4 space-y-6">
+          {/* Column 2: Generated Images */}
+          <div className="space-y-4">
             <Card className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold">Generated Output</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Hero · Lifestyle · Feature (same product, different scenes)</p>
+                  <p className="text-sm font-semibold text-gray-900">Generated Output</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Hero · Lifestyle · Feature</p>
                 </div>
                 <Pill tone={images.length ? 'good' : 'neutral'}>{images.length ? '3 Images' : 'Empty'}</Pill>
               </div>
 
-              <div className="mt-5">
+              <div className="mt-4">
                 {images.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-8 text-center">
-                    <div className="mx-auto h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400">
+                  <div className="rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 p-8 text-center">
+                    <div className="mx-auto h-12 w-12 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400">
                       <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
                         <path
                           d="M4 16l4.6-4.6a2 2 0 012.8 0L16 16m-2-2l1.6-1.6a2 2 0 012.8 0L20 14"
@@ -983,19 +948,17 @@ export default function Home() {
                         />
                       </svg>
                     </div>
-                    <p className="text-sm text-gray-300 mt-3">No images yet</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Run the pipeline to generate your 3 strategic images.
-                    </p>
+                    <p className="text-sm text-gray-500 mt-3">No images yet</p>
+                    <p className="text-xs text-gray-400 mt-1">Run the pipeline to generate your 3 strategic images.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-4">
                     {images.map((img) => (
-                      <div key={img.key} className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
-                        <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+                      <div key={img.key} className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+                        <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                           <div className="flex items-center gap-2 min-w-0">
                             <span className="h-2.5 w-2.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500" />
-                            <p className="text-sm font-semibold truncate">{img.label}</p>
+                            <p className="text-sm font-semibold text-gray-800 truncate">{img.label}</p>
                           </div>
                           <Pill tone="neutral">{img.key}</Pill>
                         </div>
@@ -1004,14 +967,14 @@ export default function Home() {
                           {img.key === 'feature' ? (
                             <FeatureImageOverlay imageData={img.imageData} features={keyFeatures} />
                           ) : (
-                            <img src={img.imageData} alt={img.label} className="w-full aspect-square object-cover rounded-2xl" />
+                            <img src={img.imageData} alt={img.label} className="w-full aspect-square object-cover rounded-lg" />
                           )}
 
-                          <details className="mt-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                            <summary className="cursor-pointer text-xs text-gray-300 font-semibold">
+                          <details className="mt-3 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+                            <summary className="cursor-pointer text-xs text-gray-600 font-semibold">
                               View prompt
                             </summary>
-                            <p className="mt-2 text-xs text-gray-400 leading-relaxed whitespace-pre-wrap">
+                            <p className="mt-2 text-xs text-gray-500 leading-relaxed whitespace-pre-wrap">
                               {img.prompt}
                             </p>
                           </details>
@@ -1023,22 +986,107 @@ export default function Home() {
               </div>
             </Card>
 
+            {/* Quick QA Checklist */}
             <Card className="p-5">
-              <p className="text-sm font-semibold">Quick QA checklist</p>
-              <ul className="mt-3 space-y-2 text-xs text-gray-400">
+              <p className="text-sm font-semibold text-gray-900">Quick QA Checklist</p>
+              <ul className="mt-3 space-y-2 text-xs text-gray-500">
                 <li className="flex gap-2">
-                  <span className="text-amber-200">•</span> Product looks identical across all 3 images (color/print/fit)
+                  <span className="text-amber-500">•</span> Product looks identical across all 3 images
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-amber-200">•</span> Hero: premium studio (dark, centered, dramatic)
+                  <span className="text-amber-500">•</span> Hero: premium studio (dark, centered)
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-amber-200">•</span> Lifestyle: real audience vibe (candid, urban/campus)
+                  <span className="text-amber-500">•</span> Lifestyle: real audience vibe (candid)
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-amber-200">•</span> Feature: macro detail + clean negative space for callouts
+                  <span className="text-amber-500">•</span> Feature: macro detail with clean negative space
                 </li>
               </ul>
+            </Card>
+          </div>
+
+          {/* Column 3: Additional Stats / Context */}
+          <div className="space-y-4">
+            <Card className="p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="h-8 w-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
+                  <IconSpark />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Intent Farm</p>
+                  <p className="text-xs text-gray-400">Brand Visual Pipeline</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-xs text-gray-500">Product</span>
+                  <span className="text-xs font-medium text-gray-700">{productName}</span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-xs text-gray-500">Category</span>
+                  <span className="text-xs font-medium text-gray-700">{productCategory}</span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-xs text-gray-500">Price Point</span>
+                  <span className="text-xs font-medium text-gray-700">{pricePositioning}</span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-xs text-gray-500">Platform</span>
+                  <span className="text-xs font-medium text-gray-700">{platform}</span>
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-xs text-gray-500">Visual Moods</span>
+                  <div className="flex gap-1 flex-wrap justify-end">
+                    {visualMood.slice(0, 3).map((mood) => (
+                      <span key={mood} className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{mood}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {errorMessage && (
+              <Card className="p-4 border-red-200 bg-red-50">
+                <div className="flex items-start gap-3">
+                  <div className="h-9 w-9 rounded-xl bg-red-100 border border-red-200 flex items-center justify-center text-red-600">
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 9v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      <path d="M12 17h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                      <path
+                        d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-red-700">Pipeline error</p>
+                    <p className="text-xs text-red-500 mt-1">{errorMessage}</p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Instructions */}
+            <Card className="p-5">
+              <p className="text-sm font-semibold text-gray-900">How it works</p>
+              <ol className="mt-3 space-y-2 text-xs text-gray-500">
+                <li className="flex gap-2">
+                  <span className="flex-shrink-0 h-5 w-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-[10px] font-bold">1</span>
+                  Fill in the brand brief (Product tab is required)
+                </li>
+                <li className="flex gap-2">
+                  <span className="flex-shrink-0 h-5 w-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-[10px] font-bold">2</span>
+                  Click "Run Pipeline" to start generation
+                </li>
+                <li className="flex gap-2">
+                  <span className="flex-shrink-0 h-5 w-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-[10px] font-bold">3</span>
+                  Review outputs in the results columns
+                </li>
+              </ol>
             </Card>
           </div>
         </div>
