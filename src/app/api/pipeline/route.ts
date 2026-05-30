@@ -165,34 +165,46 @@ Platform: ${platform || 'Website Hero Section'}
         // ── Stage 5: Prompt Engineering (PER‑IMAGE EXACT SPECS) ──────────
         send({ stage: 5, status: 'running', title: 'Prompt Engineering' });
         const promptsRaw = await runStep(
-          'You are an expert AI image generation prompt engineer. Follow the exact visual specifications for each image.',
-          `Brand brief:\n${brandBrief}\n\n` +
-          `Product visual anchor (MUST start every prompt): "${PRODUCT_ANCHOR}".\n\n` +
-          `Generate THREE prompts, one per image. For each, adhere to the locked style guide:\n\n` +
-          `PROMPT_1 (HERO/PREMIUM):\n` +
-          `- Start with: "${PRODUCT_ANCHOR}, " then scene description.\n` +
-          `- Scene: product alone on deep black studio background, dramatic single light source creating sharp shadows, dead center, symmetrical, lots of negative space, high-end streetwear lookbook style, no people, no text.\n` +
-          `- Colors: prominently use brand colors (${brandColors}).\n` +
-          `- Photography style: commercial fashion, photorealistic.\n` +
-          `- Exclude: ${avoidElements ? avoidElements + ', ' : ''}bright cheerful lighting, lifestyle context, any person.\n\n` +
-          `PROMPT_2 (LIFESTYLE):\n` +
-          `- Start with: "${PRODUCT_ANCHOR}, " then scene description.\n` +
-          `- Scene: one relatable Gen Z person wearing the product in an urban setting (college campus, graffiti wall, busy street), natural daylight/golden hour, candid, motion implied, slightly off-center.\n` +
-          `- Colors: brand colors appear naturally in surroundings.\n` +
-          `- Photography style: instagram candid, photorealistic, real-life feel.\n` +
-          `- Exclude: ${avoidElements ? avoidElements + ', ' : ''}studio lighting, posed stock photography, model-agency faces, white studio background.\n\n` +
-          `PROMPT_3 (FEATURE/FUNCTIONAL):\n` +
-          `- Start with: "(((${PRODUCT_ANCHOR}))), " then scene description.\n` +
-          `- Scene: extreme macro close-up of the EXACT product "${PRODUCT_ANCHOR}". Show the real product's fabric texture, stitching, and details filling the frame. Background: clean white or very light grey (white ALLOWED). Lighting: even, soft, shadowless. Composition: macro detail shot that leaves space around the edges for overlaying callout icons (do NOT draw icons, just leave clean negative space).\n` +
-          `- Colors: neutral, let product colors be accurate.\n` +
-          `- Photography style: detailed macro product photography, photorealistic, 8k.\n` +
-          `- Exclude: dark moody lighting, lifestyle elements, people, clutter, text, logos.\n` +
-          `(Note: for this image only, white background is acceptable, even if the avoid list includes it. The avoid list applies to the other two images.)\n\n` +
-          `Format EXACTLY as:\n` +
-          `PROMPT_1: <prompt>\n` +
-          `PROMPT_2: <prompt>\n` +
-          `PROMPT_3: <prompt>\n` +
-          `No explanations.`
+          'You are an expert AI image generation prompt engineer. Write dense, technical prompts optimized for FLUX/Stable Diffusion. Every prompt MUST be under 350 characters total. No explanations.',
+          `Product anchor (start EVERY prompt with this exactly): "${PRODUCT_ANCHOR}"
+            Brand colors: ${brandColors}
+            Avoid in images 1 & 2: ${avoidElements || 'nothing'}
+
+            Write 3 prompts using this exact formula for each:
+            [product anchor], [shot type], [camera + lens], [lighting], [background], [composition], [style keywords], [mood]
+
+            PROMPT_1 — HERO/PREMIUM:
+            Shot type: floating product hero shot
+            Camera: Sony A7R full-frame, 85mm f/1.8
+            Lighting: dramatic single-source rim light, sharp shadows
+            Background: deep black studio, negative space
+            Style: high-end streetwear lookbook, commercial fashion photography, photorealistic, 8k
+            Mood: aspirational, premium, confident
+            Exclude: people, props, white backgrounds, ${avoidElements}
+
+            PROMPT_2 — LIFESTYLE:
+            Shot type: candid street editorial
+            Camera: 35mm f/2.0, natural light
+            Lighting: golden hour sunlight, soft fill
+            Background: urban setting — graffiti wall or college campus, real environment
+            Subject: one Gen Z person wearing the product, candid pose, slightly off-center
+            Style: Instagram editorial, photorealistic, authentic
+            Mood: relatable, youthful, identity-driven
+            Exclude: studio lighting, posed stock photography, white backgrounds, ${avoidElements}
+
+            PROMPT_3 — FEATURE/MACRO:
+            Shot type: extreme macro close-up detail shot
+            Camera: 100mm macro lens, f/8, tripod
+            Lighting: even softbox, shadowless, Amazon product style
+            Background: clean white or light grey
+            Subject: fabric weave, stitching texture of ${keyFeatures.split(',')[0]?.trim() || 'the product'} filling the frame
+            Style: detailed macro product photography, photorealistic, 8k, sharp edges
+            Mood: trust, transparency, quality
+
+            Format EXACTLY — no extra text:
+            PROMPT_1: <under 350 chars>
+            PROMPT_2: <under 350 chars>
+            PROMPT_3: <under 350 chars>`
         );
         send({ stage: 5, status: 'done', title: 'Prompt Engineering', output: promptsRaw });
 
