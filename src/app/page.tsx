@@ -22,8 +22,6 @@ interface ImageResult {
   imageData: string;
 }
 
-type TabId = 'product' | 'audience' | 'visual' | 'constraints';
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────────────────────────────────────
@@ -80,24 +78,21 @@ const MOOD_OPTIONS = [
   'Luxury & Refined',
 ];
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: 'product', label: 'Product' },
-  { id: 'audience', label: 'Audience' },
-  { id: 'visual', label: 'Visual' },
-  { id: 'constraints', label: 'Constraints' },
-];
-
 // ─────────────────────────────────────────────────────────────────────────────
-// UI Primitives
+// Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ');
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// UI Primitives
+// ─────────────────────────────────────────────────────────────────────────────
+
 function IconSpark() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M12 2l1.2 5.1L18 8.5l-4.4 2.1L12 16l-1.6-5.4L6 8.5l4.8-1.4L12 2z"
         stroke="currentColor"
@@ -114,81 +109,64 @@ function IconSpark() {
   );
 }
 
-function Pill({
-  children,
-  tone = 'neutral',
-}: {
-  children: React.ReactNode;
-  tone?: 'neutral' | 'brand' | 'good' | 'warn' | 'bad';
-}) {
-  const map: Record<string, string> = {
-    neutral: 'bg-gray-100 text-gray-600 border-gray-200',
-    brand: 'bg-amber-100 text-amber-700 border-amber-200',
-    good: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    warn: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    bad: 'bg-red-100 text-red-700 border-red-200',
+type PillTone = 'neutral' | 'brand' | 'good' | 'warn' | 'bad' | 'info';
+
+function Pill({ children, tone = 'neutral' }: { children: React.ReactNode; tone?: PillTone }) {
+  const map: Record<PillTone, string> = {
+    neutral: 'bg-zinc-800 text-zinc-400 border-zinc-700',
+    brand:   'bg-amber-900/40 text-amber-300 border-amber-700',
+    good:    'bg-green-900/40 text-green-300 border-green-700',
+    warn:    'bg-yellow-900/40 text-yellow-300 border-yellow-700',
+    bad:     'bg-red-900/40 text-red-300 border-red-700',
+    info:    'bg-blue-900/40 text-blue-300 border-blue-700',
   };
   return (
-    <span className={cn('inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium', map[tone])}>
+    <span className={cn('inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium', map[tone])}>
       {children}
     </span>
   );
 }
 
-function StageStatusDot({ status }: { status: StageStatus }) {
-  const cls =
-    status === 'running'
-      ? 'bg-amber-400 animate-pulse'
-      : status === 'done'
-        ? 'bg-emerald-400'
-        : status === 'error'
-          ? 'bg-red-400'
-          : 'bg-gray-300';
-  return <span className={cn('h-2 w-2 rounded-full', cls)} />;
+function StatusDot({ status }: { status: StageStatus }) {
+  return (
+    <span
+      className={cn(
+        'h-2 w-2 rounded-full flex-shrink-0',
+        status === 'running' && 'bg-amber-400 animate-pulse',
+        status === 'done'    && 'bg-green-500',
+        status === 'error'   && 'bg-red-500',
+        status === 'idle'    && 'bg-zinc-600',
+      )}
+    />
+  );
 }
 
 function ProgressBar({ value }: { value: number }) {
   const pct = Math.max(0, Math.min(100, value));
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-700 border border-zinc-700">
       <div
-        className="h-full rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 transition-all duration-500"
+        className="h-full rounded-full bg-amber-400 transition-all duration-500"
         style={{ width: `${pct}%` }}
       />
     </div>
   );
 }
 
-function FieldLabel({
-  label,
-  tip,
-  required,
-}: {
-  label: string;
-  tip?: string;
-  required?: boolean;
-}) {
+function FieldLabel({ label, tip, required }: { label: string; tip?: string; required?: boolean }) {
   return (
-    <div className="space-y-0.5">
-      <div className="flex items-center gap-1.5">
-        <label className="text-xs font-semibold text-gray-700">{label}</label>
-        {required && <span className="text-[10px] font-semibold text-amber-600">Required</span>}
-      </div>
-      {tip && <p className="text-[11px] text-gray-400">{tip}</p>}
+    <div className="flex items-center gap-1.5 flex-wrap">
+      <label className="text-[11px] uppercase tracking-wider text-zinc-400 font-semibold">{label}</label>
+      {required && <span className="text-[10px] font-semibold text-amber-400 bg-amber-900/30 border border-amber-700 px-1.5 py-0.5 rounded-full">Required</span>}
+      {tip && <span className="text-[11px] text-zinc-500">· {tip}</span>}
     </div>
   );
 }
 
 function TextInput({
-  value,
-  onChange,
-  placeholder,
-  disabled,
+  value, onChange, placeholder, disabled,
 }: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
+  value: string; onChange: (v: string) => void; placeholder?: string; disabled?: boolean;
 }) {
   return (
     <input
@@ -197,27 +175,19 @@ function TextInput({
       placeholder={placeholder}
       disabled={disabled}
       className={cn(
-        'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900',
-        'placeholder:text-gray-400 outline-none',
-        'focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400/50',
-        'disabled:bg-gray-50 disabled:text-gray-400'
+        'w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100',
+        'placeholder:text-zinc-600 outline-none',
+        'focus:ring-2 focus:ring-amber-300/50 focus:border-amber-400',
+        'disabled:opacity-40 transition',
       )}
     />
   );
 }
 
 function TextareaInput({
-  value,
-  onChange,
-  placeholder,
-  disabled,
-  rows = 3,
+  value, onChange, placeholder, disabled, rows = 3,
 }: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  rows?: number;
+  value: string; onChange: (v: string) => void; placeholder?: string; disabled?: boolean; rows?: number;
 }) {
   return (
     <textarea
@@ -227,25 +197,19 @@ function TextareaInput({
       disabled={disabled}
       rows={rows}
       className={cn(
-        'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900',
-        'placeholder:text-gray-400 outline-none resize-none',
-        'focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400/50',
-        'disabled:bg-gray-50 disabled:text-gray-400'
+        'w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100',
+        'placeholder:text-zinc-600 outline-none resize-none leading-relaxed',
+        'focus:ring-2 focus:ring-amber-300/50 focus:border-amber-400',
+        'disabled:opacity-40 transition',
       )}
     />
   );
 }
 
 function SelectInput({
-  value,
-  onChange,
-  options,
-  disabled,
+  value, onChange, options, disabled,
 }: {
-  value: string;
-  onChange: (v: string) => void;
-  options: string[];
-  disabled?: boolean;
+  value: string; onChange: (v: string) => void; options: string[]; disabled?: boolean;
 }) {
   return (
     <div className="relative">
@@ -254,18 +218,14 @@ function SelectInput({
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         className={cn(
-          'w-full appearance-none rounded-lg border border-gray-200 bg-white px-3 py-2 pr-10 text-sm text-gray-900',
-          'outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400/50',
-          'disabled:bg-gray-50 disabled:text-gray-400 cursor-pointer'
+          'w-full appearance-none rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 pr-9 text-sm text-zinc-100',
+          'outline-none focus:ring-2 focus:ring-amber-300/50 focus:border-amber-400',
+          'disabled:opacity-40 cursor-pointer transition',
         )}
       >
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
+        {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
-      <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
+      <div className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-zinc-500">
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
           <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -274,22 +234,13 @@ function SelectInput({
   );
 }
 
-function MoodPicker({
-  selected,
-  onChange,
-  disabled,
-}: {
-  selected: string[];
-  onChange: (v: string[]) => void;
-  disabled?: boolean;
-}) {
+function MoodPicker({ selected, onChange, disabled }: { selected: string[]; onChange: (v: string[]) => void; disabled?: boolean }) {
   const toggle = (mood: string) => {
     if (disabled) return;
     onChange(selected.includes(mood) ? selected.filter((m) => m !== mood) : [...selected, mood]);
   };
-
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-1.5">
       {MOOD_OPTIONS.map((mood) => {
         const active = selected.includes(mood);
         return (
@@ -299,11 +250,11 @@ function MoodPicker({
             onClick={() => toggle(mood)}
             disabled={disabled}
             className={cn(
-              'rounded-full border px-3 py-1 text-xs transition',
+              'rounded-full border px-3 py-1 text-xs font-medium transition',
               active
-                ? 'border-amber-400 bg-amber-50 text-amber-700'
-                : 'border-gray-200 bg-white text-gray-500 hover:text-gray-700 hover:border-gray-300',
-              disabled && 'opacity-50'
+                ? 'border-amber-600 bg-amber-900/40 text-amber-300'
+                : 'border-zinc-700 bg-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700',
+              disabled && 'opacity-40',
             )}
           >
             {mood}
@@ -314,10 +265,72 @@ function MoodPicker({
   );
 }
 
-function Card({ children, className }: { children: React.ReactNode; className?: string }) {
+// ─────────────────────────────────────────────────────────────────────────────
+// Evaluation Components
+// ─────────────────────────────────────────────────────────────────────────────
+
+function EvalSection({ title, text, accent }: { title: string; text: string; accent: string }) {
+  const lines = text.split('\n').filter(Boolean);
+  const scores: { label: string; score: number; reason: string }[] = [];
+  lines.forEach((line) => {
+    const m = line.match(/^(.+?):\s*(\d+)\/10\s*[—–-]\s*(.+)$/);
+    if (m) scores.push({ label: m[1], score: parseInt(m[2]), reason: m[3] });
+  });
+  if (!scores.length) return <p className="text-zinc-300 text-xs">{text}</p>;
+
+  const getColor = (s: number) =>
+    s >= 8 ? { bar: 'bg-green-500', pill: 'bg-green-100 text-green-800' }
+    : s >= 6 ? { bar: 'bg-amber-400', pill: 'bg-amber-100 text-amber-800' }
+    : { bar: 'bg-red-400', pill: 'bg-red-100 text-red-700' };
+
   return (
-    <div className={cn('rounded-xl border border-gray-200 bg-white shadow-sm', className)}>
-      {children}
+    <div className="space-y-3">
+      <div className={cn('text-[11px] font-bold uppercase tracking-wider', accent)}>{title}</div>
+      {scores.map(({ label, score, reason }) => {
+        const c = getColor(score);
+        return (
+          <div key={label} className="space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-zinc-300">{label}</span>
+              <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full', c.pill)}>{score}/10</span>
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-zinc-700 overflow-hidden">
+              <div className={cn('h-full rounded-full transition-all duration-700', c.bar)} style={{ width: `${score * 10}%` }} />
+            </div>
+            <p className="text-[11px] text-zinc-500">{reason}</p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function EvaluationCard({ text }: { text: string }) {
+  const heroBlock   = text.match(/HERO IMAGE:([\s\S]+?)(?=LIFESTYLE IMAGE:|FEATURE IMAGE:|OVERALL:|$)/i)?.[1] ?? '';
+  const lifeBlock   = text.match(/LIFESTYLE IMAGE:([\s\S]+?)(?=FEATURE IMAGE:|OVERALL:|$)/i)?.[1] ?? '';
+  const featBlock   = text.match(/FEATURE IMAGE:([\s\S]+?)(?=OVERALL:|$)/i)?.[1] ?? '';
+  const overall     = text.match(/OVERALL:\s*(.+)/i)?.[1] ?? '';
+
+  if (!heroBlock && !lifeBlock && !featBlock) {
+    return <p className="text-zinc-300 text-xs whitespace-pre-wrap">{text}</p>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="rounded-xl border border-zinc-700 bg-zinc-800 p-3">
+          <EvalSection title="Hero / Premium" text={heroBlock} accent="text-amber-700" />
+        </div>
+        <div className="rounded-xl border border-zinc-700 bg-zinc-800 p-3">
+          <EvalSection title="Lifestyle" text={lifeBlock} accent="text-blue-600" />
+        </div>
+        <div className="rounded-xl border border-zinc-700 bg-zinc-800 p-3">
+          <EvalSection title="Feature" text={featBlock} accent="text-purple-600" />
+        </div>
+      </div>
+      {overall && (
+        <p className="text-xs text-zinc-500 italic leading-relaxed border-t border-zinc-700 pt-3">{overall}</p>
+      )}
     </div>
   );
 }
@@ -326,63 +339,8 @@ function Card({ children, className }: { children: React.ReactNode; className?: 
 // Feature Image Overlay
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CottonWeightIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-    <rect x="3" y="6" width="18" height="12" rx="2" />
-    <path d="M12 8v8M8 12h8" />
-  </svg>
-);
-
-const BreathableIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-    <path d="M4 12h16M4 12a4 4 0 014-4M20 12a4 4 0 01-4-4M4 12a4 4 0 004 4M20 12a4 4 0 00-4 4" />
-  </svg>
-);
-
-const OversizedIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-    <path d="M3 3h18v18H3V3zM8 3v18M16 3v18" />
-  </svg>
-);
-
-const DroppedShoulderIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-    <path d="M4 6l16 12M4 18L20 6" />
-  </svg>
-);
-
-const RibbedCollarIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-    <path d="M12 3v6M8 7l4-4 4 4" />
-    <path d="M8 17v4h8v-4" />
-  </svg>
-);
-
-const CottonIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-    <circle cx="12" cy="12" r="8" />
-  </svg>
-);
-
-const StarIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-  </svg>
-);
-
-const iconMap: Record<string, React.ReactNode> = {
-  '240 gsm': <CottonWeightIcon />,
-  breathable: <BreathableIcon />,
-  oversized: <OversizedIcon />,
-  'dropped shoulders': <DroppedShoulderIcon />,
-  'ribbed collar': <RibbedCollarIcon />,
-  cotton: <CottonIcon />,
-  default: <StarIcon />,
-};
-
 function FeatureImageOverlay({ imageData, features }: { imageData: string; features: string }) {
   const featureList = features.split(',').map((f) => f.trim()).filter(Boolean);
-
   const positions = [
     { top: '14%', left: '18%' },
     { top: '14%', right: '18%' },
@@ -393,144 +351,67 @@ function FeatureImageOverlay({ imageData, features }: { imageData: string; featu
   ];
 
   return (
-    <div className="relative group aspect-square overflow-hidden rounded-xl">
+    <div className="relative aspect-square overflow-hidden rounded-xl">
       <img src={imageData} alt="Feature breakdown" className="h-full w-full object-cover" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/10 pointer-events-none" />
-
-      {featureList.map((feat, idx) => {
-        const key = Object.keys(iconMap).find((k) => feat.toLowerCase().includes(k)) || 'default';
-        const icon = iconMap[key];
-        const pos = positions[idx % positions.length];
-
-        return (
-          <div key={idx} className="absolute" style={pos as React.CSSProperties}>
-            <div
-              className={cn(
-                'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium shadow-md',
-                'bg-white/90 border border-gray-200 text-gray-800 backdrop-blur-sm'
-              )}
-              style={{ transform: 'translate(-50%, -50%)' }}
-            >
-              <span className="w-4 h-4 text-amber-600">{icon}</span>
-              <span className="truncate max-w-[120px]">{feat}</span>
-            </div>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/5 pointer-events-none" />
+      {featureList.map((feat, idx) => (
+        <div key={idx} className="absolute" style={positions[idx % positions.length] as React.CSSProperties}>
+          <div
+            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium shadow-lg bg-black/70 border border-white/20 text-white backdrop-blur"
+            style={{ transform: 'translate(-50%, -50%)' }}
+          >
+            <span className="truncate max-w-[120px]">{feat}</span>
           </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Evaluation Section
-// ─────────────────────────────────────────────────────────────────────────────
-
-function EvalSection({ title, text, color }: { title: string; text: string; color: string }) {
-  const lines = text.split('\n').filter(Boolean);
-  const scores: { label: string; score: number; reason: string }[] = [];
-  lines.forEach((line) => {
-    const m = line.match(/^(.+?):\s*(\d+)\/10\s*[—–-]\s*(.+)$/);
-    if (m) scores.push({ label: m[1], score: parseInt(m[2]), reason: m[3] });
-  });
-  if (!scores.length) return <p className="text-gray-600 text-xs">{text}</p>;
-
-  const getScoreColor = (score: number) => {
-    if (score >= 8) return 'bg-emerald-500';
-    if (score >= 6) return 'bg-amber-500';
-    return 'bg-red-500';
-  };
-
-  return (
-    <div className="space-y-2">
-      <div className={cn('text-[11px] font-bold uppercase tracking-wide text-gray-700')}>
-        {title}
-      </div>
-      {scores.map(({ label, score, reason }) => (
-        <div key={label} className="space-y-1">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs text-gray-600">{label}</span>
-            <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full text-white', getScoreColor(score))}>
-              {score}/10
-            </span>
-          </div>
-          <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
-            <div className={cn('h-full rounded-full transition-all duration-700', getScoreColor(score))} style={{ width: `${score * 10}%` }} />
-          </div>
-          <p className="text-[11px] text-gray-400">{reason}</p>
         </div>
       ))}
     </div>
   );
 }
 
-function EvaluationCard({ text }: { text: string }) {
-  const heroBlock = text.match(/HERO IMAGE:([\s\S]+?)(?=LIFESTYLE IMAGE:|FEATURE IMAGE:|OVERALL:|$)/i)?.[1] ?? '';
-  const lifestyleBlock = text.match(/LIFESTYLE IMAGE:([\s\S]+?)(?=FEATURE IMAGE:|OVERALL:|$)/i)?.[1] ?? '';
-  const featureBlock = text.match(/FEATURE IMAGE:([\s\S]+?)(?=OVERALL:|$)/i)?.[1] ?? '';
-  const overall = text.match(/OVERALL:\s*(.+)/i)?.[1] ?? '';
+// ─────────────────────────────────────────────────────────────────────────────
+// Brief Tab System
+// ─────────────────────────────────────────────────────────────────────────────
 
-  if (!heroBlock && !lifestyleBlock && !featureBlock) {
-    return <p className="text-gray-600 text-xs whitespace-pre-wrap">{text}</p>;
-  }
+type TabId = 'product' | 'audience' | 'visual' | 'constraints';
 
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-          <EvalSection title="Hero / Premium" text={heroBlock} color="from-amber-600 to-amber-700" />
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-          <EvalSection title="Lifestyle" text={lifestyleBlock} color="from-cyan-600 to-blue-700" />
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-          <EvalSection title="Feature" text={featureBlock} color="from-purple-600 to-pink-700" />
-        </div>
-      </div>
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'product',     label: 'Product' },
+  { id: 'audience',    label: 'Audience' },
+  { id: 'visual',      label: 'Visual Direction' },
+  { id: 'constraints', label: 'Constraints' },
+];
 
-      {overall && (
-        <div className="pt-3 border-t border-gray-200">
-          <p className="text-xs text-gray-500 italic">{overall}</p>
-        </div>
-      )}
-    </div>
+// ─────────────────────────────────────────────────────────────────────────────
+// Main Component
+// ─────────────────────────────────────────────────────────────────────────────
+
+export default function Home() {
+  // ── Form state ──────────────────────────────────────────────────────────────
+  const [productName,         setProductName]         = useState('Oversized Graphic T-Shirt');
+  const [productCategory,     setProductCategory]     = useState('Apparel & Clothing');
+  const [keyFeatures,         setKeyFeatures]         = useState('240 GSM cotton, Oversized fit, Breathable fabric');
+  const [coreUSP,             setCoreUSP]             = useState('Only breathable oversized tee under ₹599');
+  const [productVisualAnchor, setProductVisualAnchor] = useState(
+    'Black oversized crew-neck tee with a large distressed yellow graphic print on the front chest, dropped shoulders, ribbed collar',
   );
-}
+  const [targetAudience,      setTargetAudience]      = useState('Gen Z College Students (18–30)');
+  const [pricePositioning,    setPricePositioning]    = useState('Budget (₹0–500)');
+  const [brandColors,         setBrandColors]         = useState('Black, White, Yellow');
+  const [brandTone,           setBrandTone]           = useState('Humorous and Casual');
+  const [visualMood,          setVisualMood]          = useState<string[]>(['Bold & Loud', 'Playful & Fun']);
+  const [competitorBrands,    setCompetitorBrands]    = useState('Bewakoof, The Souled Store, Snitch');
+  const [avoidElements,       setAvoidElements]       = useState('White backgrounds, formal styling, luxury aesthetics');
+  const [platform,            setPlatform]            = useState('Website Hero Section');
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Main App Component – Redesigned Layout
-// ─────────────────────────────────────────────────────────────────────────────
-
-export default function App() {
-  // State
+  // ── Tab state ───────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<TabId>('product');
 
-  // Product Identity
-  const [productName, setProductName] = useState('Oversized Graphic T-Shirt');
-  const [productCategory, setProductCategory] = useState('Apparel & Clothing');
-  const [keyFeatures, setKeyFeatures] = useState('240 GSM cotton, Oversized fit, Breathable fabric');
-  const [coreUSP, setCoreUSP] = useState('Only breathable oversized tee under ₹599');
-  const [productVisualAnchor, setProductVisualAnchor] = useState(
-    'Black oversized crew-neck tee with a large distressed yellow graphic print on the front chest, dropped shoulders, ribbed collar'
-  );
-
-  // Audience & Positioning
-  const [targetAudience, setTargetAudience] = useState('Gen Z College Students (18–30)');
-  const [pricePositioning, setPricePositioning] = useState('Budget (₹0–500)');
-
-  // Visual Direction
-  const [brandColors, setBrandColors] = useState('Black, White, Yellow');
-  const [brandTone, setBrandTone] = useState('Humorous and Casual');
-  const [visualMood, setVisualMood] = useState<string[]>(['Bold & Loud', 'Playful & Fun']);
-  const [competitorBrands, setCompetitorBrands] = useState('Bewakoof, The Souled Store, Snitch');
-  const [avoidElements, setAvoidElements] = useState('White backgrounds, formal styling, luxury aesthetics');
-  const [platform, setPlatform] = useState('Website Hero Section');
-
-  // Pipeline state
-  const [stages, setStages] = useState<Stage[]>(INITIAL_STAGES);
-  const [isRunning, setIsRunning] = useState(false);
-  const [images, setImages] = useState<ImageResult[]>([]);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [expandedStage, setExpandedStage] = useState<number | null>(null);
+  // ── Pipeline state ───────────────────────────────────────────────────────────
+  const [stages,          setStages]          = useState<Stage[]>(INITIAL_STAGES);
+  const [isRunning,       setIsRunning]       = useState(false);
+  const [images,          setImages]          = useState<ImageResult[]>([]);
+  const [errorMessage,    setErrorMessage]    = useState<string | null>(null);
+  const [expandedStage,   setExpandedStage]   = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const reset = () => {
@@ -553,25 +434,14 @@ export default function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          productName,
-          productCategory,
-          brandTone,
-          targetAudience,
-          brandColors,
-          keyFeatures,
-          coreUSP,
-          pricePositioning,
-          visualMood,
-          competitorBrands,
-          avoidElements,
-          platform,
-          productVisualAnchor,
+          productName, productCategory, brandTone, targetAudience, brandColors,
+          keyFeatures, coreUSP, pricePositioning, visualMood, competitorBrands,
+          avoidElements, platform, productVisualAnchor,
         }),
         signal: abortRef.current.signal,
       });
 
       if (!res.ok || !res.body) throw new Error('Pipeline request failed.');
-
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
@@ -579,7 +449,6 @@ export default function App() {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() ?? '';
@@ -596,9 +465,7 @@ export default function App() {
               updateStage(msg.stage, { title: msg.title, status: msg.status, output: msg.output ?? null });
               if (msg.status === 'running') setExpandedStage(msg.stage);
             }
-          } catch {
-            /* skip malformed */
-          }
+          } catch { /* skip malformed */ }
         }
       }
     } catch (err: any) {
@@ -608,188 +475,159 @@ export default function App() {
     }
   };
 
-  const stop = () => {
-    abortRef.current?.abort();
-    setIsRunning(false);
-  };
+  const stop = () => { abortRef.current?.abort(); setIsRunning(false); };
 
   const completedCount = stages.filter((s) => s.status === 'done').length;
-  const progressPct = (completedCount / stages.length) * 100;
+  const progressPct    = (completedCount / stages.length) * 100;
+  const stage7Output   = stages.find((s) => s.id === 7 && s.status === 'done')?.output ?? null;
+  const canRun         = Boolean(productVisualAnchor.trim()) && !isRunning;
 
-  const stage7 = stages.find((s) => s.id === 7 && s.status === 'done')?.output || null;
-
-  const canRun = Boolean(productVisualAnchor.trim()) && !isRunning;
-
-  const pipelineState = useMemo(() => {
-    if (isRunning) return { label: 'Running', tone: 'brand' as const };
-    if (errorMessage) return { label: 'Error', tone: 'bad' as const };
-    if (images.length) return { label: 'Complete', tone: 'good' as const };
-    return { label: 'Idle', tone: 'neutral' as const };
+  const pipelineState = useMemo<{ label: string; tone: PillTone }>(() => {
+    if (isRunning)    return { label: 'Running',  tone: 'info' };
+    if (errorMessage) return { label: 'Error',    tone: 'bad'  };
+    if (images.length) return { label: 'Complete', tone: 'good' };
+    return              { label: 'Idle',      tone: 'neutral' };
   }, [isRunning, errorMessage, images.length]);
 
-  // Check if all required fields in each tab are filled
-  const tabReady = {
-    product: Boolean(productVisualAnchor.trim()),
-    audience: Boolean(targetAudience.trim() && pricePositioning.trim()),
-    visual: Boolean(brandColors.trim() && brandTone.trim() && visualMood.length > 0),
-    constraints: Boolean(platform.trim()),
-  };
+  // ─────────────────────────────────────────────────────────────────────────
+  // Render
+  // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
-      {/* Sticky header */}
-      <div className="sticky top-0 z-40 border-b border-gray-200 bg-white shadow-sm">
-        <div className="mx-auto max-w-[1600px] px-4 md:px-6 py-3">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-500 text-gray-900 flex items-center justify-center">
-                <IconSpark />
-              </div>
-              <div className="flex items-center gap-2 flex-wrap min-w-0">
-                <h1 className="text-base md:text-lg font-semibold text-gray-900">Intent Farm</h1>
-                <Pill tone={pipelineState.tone}>{pipelineState.label}</Pill>
-                <Pill tone="neutral">{platform}</Pill>
-              </div>
+    <main className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
+
+      {/* ── Top bar ──────────────────────────────────────────────────────────── */}
+      <div className="sticky top-0 z-40 bg-zinc-900 border-b border-zinc-800">
+        <div className="mx-auto max-w-[1600px] px-4 md:px-6 h-14 flex items-center justify-between gap-4">
+
+          {/* Left: brand */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="h-8 w-8 rounded-lg bg-amber-400 flex items-center justify-center text-white shadow-sm">
+              <IconSpark />
             </div>
-
-            <div className="flex items-center gap-3 flex-1 justify-end">
-              <div className="hidden sm:flex items-center gap-2 flex-1 max-w-xs">
-                <span className="text-[11px] text-gray-400">Progress</span>
-                <ProgressBar value={progressPct} />
-                <span className="text-[11px] text-gray-400 tabular-nums">{completedCount}/{stages.length}</span>
-              </div>
-
-              <button
-                onClick={handleRun}
-                disabled={!canRun}
-                className={cn(
-                  'rounded-xl px-5 py-2.5 text-sm font-semibold',
-                  'bg-gradient-to-r from-amber-400 to-yellow-500 text-gray-900',
-                  'hover:from-amber-300 hover:to-yellow-400 transition shadow-sm',
-                  (!canRun) && 'opacity-50 cursor-not-allowed'
-                )}
-              >
-                {isRunning ? 'Running…' : 'Run Pipeline'}
-              </button>
-
-              {isRunning && (
-                <button
-                  onClick={stop}
-                  className="rounded-xl px-4 py-2.5 text-sm font-medium border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition"
-                >
-                  Stop
-                </button>
-              )}
-            </div>
+            <span className="text-sm font-semibold tracking-tight">Intent Farm</span>
+            <Pill tone={pipelineState.tone}>{pipelineState.label}</Pill>
+            <Pill tone="neutral">{platform}</Pill>
           </div>
 
-          {/* Mobile progress bar */}
-          <div className="sm:hidden mt-3 flex items-center gap-2">
-            <span className="text-[11px] text-gray-400">Progress</span>
-            <ProgressBar value={progressPct} />
-            <span className="text-[11px] text-gray-400">{completedCount}/{stages.length}</span>
+          {/* Right: progress + actions */}
+          <div className="flex items-center gap-3 flex-1 justify-end">
+            <div className="hidden sm:flex items-center gap-2 w-40">
+              <span className="text-[11px] text-zinc-500 whitespace-nowrap">{completedCount}/{stages.length}</span>
+              <ProgressBar value={progressPct} />
+            </div>
+
+            <button
+              onClick={handleRun}
+              disabled={!canRun}
+              className={cn(
+                'rounded-lg px-4 py-2 text-sm font-semibold bg-amber-400 text-white',
+                'hover:bg-amber-500 transition shadow-sm',
+                !canRun && 'opacity-40 cursor-not-allowed',
+              )}
+            >
+              {isRunning ? 'Running…' : 'Run Pipeline'}
+            </button>
+
+            {isRunning && (
+              <button
+                onClick={stop}
+                className="rounded-lg px-3 py-2 text-sm font-medium border border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition"
+              >
+                Stop
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Body */}
-      <div className="relative mx-auto max-w-[1600px] px-4 md:px-6 py-6">
+      {/* ── Brief strip (horizontal tabs) ───────────────────────────────────── */}
+      <div className="bg-zinc-900 border-b border-zinc-800">
+        <div className="mx-auto max-w-[1600px]">
 
-        {/* Brand Brief - Tabbed Horizontal Strip */}
-        <Card className="mb-6">
-          {/* Tab Headers */}
-          <div className="border-b border-gray-100">
-            <div className="flex items-center gap-1 px-4 pt-3">
-              {TABS.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={cn(
-                    'relative px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors',
-                    activeTab === tab.id
-                      ? 'text-amber-700 bg-amber-50'
-                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                  )}
-                >
-                  <span className="flex items-center gap-2">
-                    {tab.label}
-                    {tabReady[tab.id] && (
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                    )}
-                  </span>
-                </button>
-              ))}
+          {/* Tab bar */}
+          <div className="flex items-center gap-0 border-b border-zinc-800 px-6 bg-zinc-950 overflow-x-auto">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  'px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition',
+                  activeTab === tab.id
+                    ? 'border-amber-500 text-amber-400'
+                    : 'border-transparent text-zinc-500 hover:text-zinc-200',
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+            <div className="ml-auto flex items-center pr-2">
+              <Pill tone={productVisualAnchor.trim() ? 'good' : 'warn'}>
+                Anchor {productVisualAnchor.trim() ? 'Ready' : 'Missing'}
+              </Pill>
             </div>
           </div>
 
-          {/* Tab Content */}
-          <div className="p-4">
-            {/* Product Tab */}
+          {/* Tab content */}
+          <div className="px-6 py-4">
+
+            {/* Product tab */}
             {activeTab === 'product' && (
               <div className="space-y-4">
+                {/* Anchor field – highlighted */}
+                <div className="rounded-xl border border-amber-800/60 bg-amber-950/30 p-4 space-y-2">
+                  <FieldLabel label="Product Visual Description" required tip="Locked into every prompt — biggest driver of consistency" />
+                  <TextareaInput
+                    value={productVisualAnchor}
+                    onChange={setProductVisualAnchor}
+                    disabled={isRunning}
+                    rows={2}
+                  />
+                  <p className="text-xs text-amber-400">
+                    Be literal: color, print, fit, collar, sleeves, texture. The scene can change — the product shouldn&apos;t.
+                  </p>
+                </div>
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-1.5">
                     <FieldLabel label="Product Name" />
                     <TextInput value={productName} onChange={setProductName} disabled={isRunning} />
                   </div>
                   <div className="space-y-1.5">
-                    <FieldLabel label="Category" tip="Helps target competitors" />
+                    <FieldLabel label="Category" tip="targets competitors" />
                     <SelectInput value={productCategory} onChange={setProductCategory} options={PRODUCT_CATEGORIES} disabled={isRunning} />
                   </div>
                   <div className="space-y-1.5">
-                    <FieldLabel label="Key Features" tip="Fabric, fit, material" />
+                    <FieldLabel label="Key Features" tip="fabric, fit, material" />
                     <TextInput value={keyFeatures} onChange={setKeyFeatures} disabled={isRunning} />
                   </div>
                   <div className="space-y-1.5">
-                    <FieldLabel label="Core USP" tip="What makes it different?" />
+                    <FieldLabel label="Core USP" tip="what makes it different?" />
                     <TextInput value={coreUSP} onChange={setCoreUSP} disabled={isRunning} />
-                  </div>
-                </div>
-
-                {/* Product Visual Description - highlighted */}
-                <div className={cn(
-                  'rounded-xl border-2 p-4 space-y-3',
-                  productVisualAnchor.trim() ? 'border-amber-300 bg-amber-50/30' : 'border-yellow-300 bg-yellow-50/30'
-                )}>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-1.5">
-                        <label className="text-xs font-bold text-gray-700">Product Visual Description</label>
-                        <span className="text-[10px] font-semibold text-amber-600">Required</span>
-                      </div>
-                      <p className="text-[11px] text-gray-400">Locked into every prompt — biggest driver of consistency.</p>
-                    </div>
-                    <Pill tone={productVisualAnchor.trim() ? 'good' : 'warn'}>
-                      {productVisualAnchor.trim() ? 'Ready' : 'Missing'}
-                    </Pill>
-                  </div>
-                  <TextareaInput value={productVisualAnchor} onChange={setProductVisualAnchor} disabled={isRunning} rows={2} />
-                  <div className="rounded-lg border border-gray-200 bg-white p-3">
-                    <p className="text-[11px] font-semibold text-amber-700">Tip</p>
-                    <p className="text-[11px] text-gray-500 mt-0.5">Be literal: color, print, fit, collar, sleeves, texture. The scene can change — the product shouldn't.</p>
-                    <p className="text-[11px] text-gray-400 mt-1">
-                      Example: <span className="italic text-gray-600">"Black oversized crew-neck tee with large distressed yellow chest graphic, dropped shoulders, ribbed collar"</span>
-                    </p>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Audience Tab */}
+            {/* Audience tab */}
             {activeTab === 'audience' && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
                   <FieldLabel label="Target Audience" />
                   <TextInput value={targetAudience} onChange={setTargetAudience} disabled={isRunning} />
                 </div>
                 <div className="space-y-1.5">
-                  <FieldLabel label="Price Positioning" tip="Biggest style driver" />
+                  <FieldLabel label="Price Positioning" tip="biggest style driver" />
                   <SelectInput value={pricePositioning} onChange={setPricePositioning} options={PRICE_POSITIONS} disabled={isRunning} />
+                </div>
+                <div className="space-y-1.5">
+                  <FieldLabel label="Platform" tip="changes crop + composition rules" />
+                  <SelectInput value={platform} onChange={setPlatform} options={PLATFORMS} disabled={isRunning} />
                 </div>
               </div>
             )}
 
-            {/* Visual Tab */}
+            {/* Visual Direction tab */}
             {activeTab === 'visual' && (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -803,180 +641,207 @@ export default function App() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <FieldLabel label="Visual Mood" tip="Select all that apply" />
+                  <FieldLabel label="Visual Mood" tip="select all that apply" />
                   <MoodPicker selected={visualMood} onChange={setVisualMood} disabled={isRunning} />
                 </div>
               </div>
             )}
 
-            {/* Constraints Tab */}
+            {/* Constraints tab */}
             {activeTab === 'constraints' && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="space-y-1.5">
-                    <FieldLabel label="Known Competitors" tip="Real brand names = better research" />
-                    <TextInput value={competitorBrands} onChange={setCompetitorBrands} disabled={isRunning} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <FieldLabel label="What to AVOID" tip="Colors, styles to never use" />
-                    <TextInput value={avoidElements} onChange={setAvoidElements} disabled={isRunning} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <FieldLabel label="Platform" tip="Changes crop + composition rules" />
-                    <SelectInput value={platform} onChange={setPlatform} options={PLATFORMS} disabled={isRunning} />
-                  </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <FieldLabel label="Known Competitors" tip="real brand names = better research" />
+                  <TextInput value={competitorBrands} onChange={setCompetitorBrands} disabled={isRunning} />
+                </div>
+                <div className="space-y-1.5">
+                  <FieldLabel label="What to AVOID" tip="colors, styles to never use" />
+                  <TextInput value={avoidElements} onChange={setAvoidElements} disabled={isRunning} />
                 </div>
               </div>
             )}
           </div>
-        </Card>
+        </div>
+      </div>
 
-        {/* Three-Column Results Area */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* ── Error banner ─────────────────────────────────────────────────────── */}
+      {errorMessage && (
+        <div className="mx-auto max-w-[1600px] w-full px-6 pt-4">
+          <div className="rounded-xl border border-red-800 bg-red-950/40 p-3 flex items-start gap-3">
+            <svg className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none">
+              <path d="M12 9v4M12 17h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+            </svg>
+            <div>
+              <p className="text-sm font-semibold text-red-300">Pipeline error</p>
+              <p className="text-xs text-red-400 mt-0.5">{errorMessage}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
-          {/* Column 1: Pipeline Timeline */}
+      {/* ── Three-column results ─────────────────────────────────────────────── */}
+      <div className="flex-1 mx-auto max-w-[1600px] w-full px-4 md:px-6 py-5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 h-full">
+
+          {/* ── Col 1: Pipeline timeline ──────────────────────────────────────── */}
           <div className="space-y-4">
-            <Card className="p-5">
-              <div className="flex items-center justify-between">
+            <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Pipeline Timeline</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Click completed stages to expand output.</p>
+                  <p className="text-sm font-semibold text-zinc-100">Pipeline Timeline</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Click completed stages to expand output</p>
                 </div>
                 <Pill tone="neutral">{completedCount}/{stages.length} done</Pill>
               </div>
 
-              <div className="mt-4 space-y-2">
+              <div className="divide-y divide-zinc-800">
                 {stages.map((stage) => {
                   const expanded = expandedStage === stage.id && stage.status === 'done';
-                  const isEval = stage.id === 7;
-
                   return (
                     <div
                       key={stage.id}
                       className={cn(
-                        'rounded-xl border p-3 transition cursor-pointer',
-                        stage.status === 'running' && 'border-amber-300 bg-amber-50',
-                        stage.status === 'done' && 'border-gray-200 bg-gray-50 hover:bg-gray-100',
-                        stage.status === 'idle' && 'border-gray-100 bg-white',
-                        stage.status === 'error' && 'border-red-200 bg-red-50'
+                        'transition',
+                        stage.status === 'running' && 'bg-amber-950/20',
+                        stage.status === 'done'    && 'hover:bg-zinc-800 cursor-pointer',
+                        stage.status === 'error'   && 'bg-red-950/20',
                       )}
                       onClick={() => {
                         if (stage.status !== 'done') return;
                         setExpandedStage(expanded ? null : stage.id);
                       }}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 w-[56px]">
-                          <StageStatusDot status={stage.status} />
-                          <span className="text-xs text-gray-400 tabular-nums font-mono">{String(stage.id).padStart(2, '0')}</span>
-                        </div>
-
+                      <div className="flex items-center gap-3 px-4 py-3">
+                        <span className="text-xs text-zinc-600 w-5 text-right tabular-nums">{stage.id}</span>
+                        <StatusDot status={stage.status} />
                         <div className="flex-1 min-w-0">
-                          <p className={cn('text-sm font-medium', stage.status === 'idle' ? 'text-gray-400' : 'text-gray-700')}>
+                          <p className={cn('text-sm truncate', stage.status === 'idle' ? 'text-zinc-600' : 'text-zinc-100')}>
                             {stage.title}
                           </p>
-                          {stage.status === 'running' && <p className="text-xs text-amber-600 mt-0.5">Processing…</p>}
-                          {stage.status === 'error' && <p className="text-xs text-red-600 mt-0.5">Failed</p>}
-                          {stage.status === 'done' && <p className="text-xs text-gray-400 mt-0.5">Click to view output</p>}
+                          <p className="text-[11px] text-zinc-500 mt-0.5">
+                            {stage.status === 'running' ? 'Processing…'
+                              : stage.status === 'done' ? 'Click to view output'
+                              : stage.status === 'error' ? 'Failed'
+                              : 'Waiting'}
+                          </p>
                         </div>
-
                         {stage.status === 'done' && (
-                          <span className="text-gray-400 text-xs">{expanded ? 'Hide' : 'View'}</span>
+                          <span className="text-xs text-zinc-500">{expanded ? 'Hide' : 'View'}</span>
                         )}
                       </div>
 
                       {expanded && stage.output && (
-                        <div className="mt-3 pt-3 border-t border-gray-200">
-                          {isEval ? (
-                            <EvaluationCard text={stage.output} />
-                          ) : (
-                            <p className="text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">{stage.output}</p>
-                          )}
+                        <div className="px-4 pb-4">
+                          <div className="rounded-lg bg-zinc-800 border border-zinc-700 p-3">
+                            {stage.id === 7
+                              ? <EvaluationCard text={stage.output} />
+                              : <p className="text-xs text-zinc-300 whitespace-pre-wrap leading-relaxed">{stage.output}</p>
+                            }
+                          </div>
                         </div>
                       )}
                     </div>
                   );
                 })}
               </div>
-            </Card>
-
-            {/* Inline Evaluation Scorecard */}
-            {stage7 && (
-              <Card className="p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">Evaluation Scorecard</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Final QA view of all 3 images.</p>
-                  </div>
-                  <Pill tone="good">Done</Pill>
-                </div>
-                <div className="mt-4">
-                  <EvaluationCard text={stage7} />
-                </div>
-              </Card>
-            )}
+            </div>
           </div>
 
-          {/* Column 2: Generated Images */}
+          {/* ── Col 2: Evaluation scorecard ───────────────────────────────────── */}
           <div className="space-y-4">
-            <Card className="p-5">
-              <div className="flex items-center justify-between">
+            <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Generated Output</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Hero · Lifestyle · Feature</p>
+                  <p className="text-sm font-semibold text-zinc-100">Evaluation Scorecard</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Final QA view of all 3 images</p>
+                </div>
+                <Pill tone={stage7Output ? 'good' : 'neutral'}>{stage7Output ? 'Done' : 'Pending'}</Pill>
+              </div>
+              <div className="p-4">
+                {stage7Output ? (
+                  <EvaluationCard text={stage7Output} />
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center gap-2">
+                    <div className="h-11 w-11 rounded-xl border border-zinc-700 bg-zinc-800 flex items-center justify-center">
+                      <svg className="h-5 w-5 text-zinc-500" viewBox="0 0 24 24" fill="none">
+                        <path d="M9 17l3-3 3 3M12 14V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M3 17a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2v8z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                    <p className="text-sm text-zinc-300">No scores yet</p>
+                    <p className="text-xs text-zinc-500">Run the pipeline to generate scores.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* QA Checklist */}
+            <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
+              <p className="text-sm font-semibold text-zinc-100 mb-3">Quick QA Checklist</p>
+              <ul className="space-y-2">
+                {[
+                  'Product looks identical across all 3 images (color, print, fit)',
+                  'Hero: premium studio — dark, centered, dramatic lighting',
+                  'Lifestyle: real audience vibe — candid, urban or campus',
+                  'Feature: macro detail + clean negative space for callouts',
+                ].map((item) => (
+                  <li key={item} className="flex gap-2 text-xs text-zinc-400">
+                    <span className="text-amber-400 mt-0.5">•</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* ── Col 3: Generated images ───────────────────────────────────────── */}
+          <div>
+            <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+                <div>
+                  <p className="text-sm font-semibold text-zinc-100">Generated Output</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Hero · Lifestyle · Feature (same product, different scenes)</p>
                 </div>
                 <Pill tone={images.length ? 'good' : 'neutral'}>{images.length ? '3 Images' : 'Empty'}</Pill>
               </div>
 
-              <div className="mt-4">
+              <div className="p-4">
                 {images.length === 0 ? (
-                  <div className="rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 p-8 text-center">
-                    <div className="mx-auto h-12 w-12 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400">
-                      <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
-                        <path
-                          d="M4 16l4.6-4.6a2 2 0 012.8 0L16 16m-2-2l1.6-1.6a2 2 0 012.8 0L20 14"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinejoin="round"
-                        />
+                  <div className="flex flex-col items-center justify-center py-12 text-center gap-2">
+                    <div className="h-11 w-11 rounded-xl border border-zinc-700 bg-zinc-800 flex items-center justify-center">
+                      <svg className="h-5 w-5 text-zinc-500" viewBox="0 0 24 24" fill="none">
+                        <path d="M4 16l4.6-4.6a2 2 0 012.8 0L16 16m-2-2l1.6-1.6a2 2 0 012.8 0L20 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
                       </svg>
                     </div>
-                    <p className="text-sm text-gray-500 mt-3">No images yet</p>
-                    <p className="text-xs text-gray-400 mt-1">Run the pipeline to generate your 3 strategic images.</p>
+                    <p className="text-sm text-zinc-300">No images yet</p>
+                    <p className="text-xs text-zinc-500">Run the pipeline to generate your 3 strategic images.</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {images.map((img) => (
-                      <div key={img.key} className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-                        <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="h-2.5 w-2.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500" />
-                            <p className="text-sm font-semibold text-gray-800 truncate">{img.label}</p>
+                      <div key={img.key} className="rounded-xl border border-zinc-700 overflow-hidden">
+                        <div className="flex items-center justify-between px-3 py-2 bg-zinc-800 border-b border-zinc-700">
+                          <div className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-amber-400" />
+                            <p className="text-sm font-medium">{img.label}</p>
                           </div>
                           <Pill tone="neutral">{img.key}</Pill>
                         </div>
-
-                        <div className="p-3">
+                        <div className="p-2">
                           {img.key === 'feature' ? (
                             <FeatureImageOverlay imageData={img.imageData} features={keyFeatures} />
                           ) : (
-                            <img src={img.imageData} alt={img.label} className="w-full aspect-square object-cover rounded-lg" />
+                            <img
+                              src={img.imageData}
+                              alt={img.label}
+                              className="w-full aspect-square object-cover rounded-lg"
+                            />
                           )}
-
-                          <details className="mt-3 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
-                            <summary className="cursor-pointer text-xs text-gray-600 font-semibold">
-                              View prompt
-                            </summary>
-                            <p className="mt-2 text-xs text-gray-500 leading-relaxed whitespace-pre-wrap">
-                              {img.prompt}
-                            </p>
+                          <details className="mt-2 rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2">
+                            <summary className="cursor-pointer text-xs text-zinc-400 font-medium">View prompt</summary>
+                            <p className="mt-1.5 text-xs text-zinc-500 leading-relaxed whitespace-pre-wrap">{img.prompt}</p>
                           </details>
                         </div>
                       </div>
@@ -984,111 +849,9 @@ export default function App() {
                   </div>
                 )}
               </div>
-            </Card>
-
-            {/* Quick QA Checklist */}
-            <Card className="p-5">
-              <p className="text-sm font-semibold text-gray-900">Quick QA Checklist</p>
-              <ul className="mt-3 space-y-2 text-xs text-gray-500">
-                <li className="flex gap-2">
-                  <span className="text-amber-500">•</span> Product looks identical across all 3 images
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-amber-500">•</span> Hero: premium studio (dark, centered)
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-amber-500">•</span> Lifestyle: real audience vibe (candid)
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-amber-500">•</span> Feature: macro detail with clean negative space
-                </li>
-              </ul>
-            </Card>
+            </div>
           </div>
 
-          {/* Column 3: Additional Stats / Context */}
-          <div className="space-y-4">
-            <Card className="p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="h-8 w-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
-                  <IconSpark />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">Intent Farm</p>
-                  <p className="text-xs text-gray-400">Brand Visual Pipeline</p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-xs text-gray-500">Product</span>
-                  <span className="text-xs font-medium text-gray-700">{productName}</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-xs text-gray-500">Category</span>
-                  <span className="text-xs font-medium text-gray-700">{productCategory}</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-xs text-gray-500">Price Point</span>
-                  <span className="text-xs font-medium text-gray-700">{pricePositioning}</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-xs text-gray-500">Platform</span>
-                  <span className="text-xs font-medium text-gray-700">{platform}</span>
-                </div>
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-xs text-gray-500">Visual Moods</span>
-                  <div className="flex gap-1 flex-wrap justify-end">
-                    {visualMood.slice(0, 3).map((mood) => (
-                      <span key={mood} className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{mood}</span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {errorMessage && (
-              <Card className="p-4 border-red-200 bg-red-50">
-                <div className="flex items-start gap-3">
-                  <div className="h-9 w-9 rounded-xl bg-red-100 border border-red-200 flex items-center justify-center text-red-600">
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 9v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                      <path d="M12 17h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                      <path
-                        d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-red-700">Pipeline error</p>
-                    <p className="text-xs text-red-500 mt-1">{errorMessage}</p>
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {/* Instructions */}
-            <Card className="p-5">
-              <p className="text-sm font-semibold text-gray-900">How it works</p>
-              <ol className="mt-3 space-y-2 text-xs text-gray-500">
-                <li className="flex gap-2">
-                  <span className="flex-shrink-0 h-5 w-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-[10px] font-bold">1</span>
-                  Fill in the brand brief (Product tab is required)
-                </li>
-                <li className="flex gap-2">
-                  <span className="flex-shrink-0 h-5 w-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-[10px] font-bold">2</span>
-                  Click "Run Pipeline" to start generation
-                </li>
-                <li className="flex gap-2">
-                  <span className="flex-shrink-0 h-5 w-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-[10px] font-bold">3</span>
-                  Review outputs in the results columns
-                </li>
-              </ol>
-            </Card>
-          </div>
         </div>
       </div>
     </main>
